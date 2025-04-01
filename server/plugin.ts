@@ -95,8 +95,11 @@ export class SecurityPlugin implements Plugin<SecurityPluginSetup, SecurityPlugi
     const config$ = this.initializerContext.config.create<SecurityPluginConfigType>();
     const config: SecurityPluginConfigType = await config$.pipe(first()).toPromise();
 
+    
     const router = core.http.createRouter();
-
+    const basePath = core.http.basePath
+    console.log('basePath', basePath);
+    
     const esClient: ILegacyClusterClient = core.opensearch.legacy.createClient(
       'opendistro_security',
       {

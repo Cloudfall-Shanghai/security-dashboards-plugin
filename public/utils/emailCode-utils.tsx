@@ -16,13 +16,14 @@
 import { HttpStart } from 'opensearch-dashboards/public';
 import { createLocalClusterRequestContext } from '../apps/configuration/utils/request-utils';
 
-export async function validateCurrentPassword(http: HttpStart, userName: string, currentPassword: string): Promise<void> {
+export async function validateEmailCode(http: HttpStart, email: string, verificationCode: string): Promise<void> {
   await createLocalClusterRequestContext().httpPost({
     http,
-    url: '/auth/login',
+    url: '/auth/login/verify',
     body: {
-      username: userName,
-      password: currentPassword,
+      email: email,
+      verificationCode: verificationCode,
     },
   });
+
 }

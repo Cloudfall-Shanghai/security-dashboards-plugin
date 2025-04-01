@@ -73,14 +73,14 @@ const PRIVATE_TENANT_RENDERING_TEXT = 'Private';
 
 export class SecurityPlugin
   implements
-    Plugin<
-      SecurityPluginSetup,
-      SecurityPluginStart,
-      SecurityPluginSetupDependencies,
-      SecurityPluginStartDependencies
-    > {
+  Plugin<
+    SecurityPluginSetup,
+    SecurityPluginStart,
+    SecurityPluginSetupDependencies,
+    SecurityPluginStartDependencies
+  > {
   // @ts-ignore : initializerContext not used
-  constructor(private readonly initializerContext: PluginInitializerContext) {}
+  constructor(private readonly initializerContext: PluginInitializerContext) { }
 
   public async setup(
     core: CoreSetup,
@@ -90,6 +90,9 @@ export class SecurityPlugin
     const mdsEnabled = !!deps.dataSource?.dataSourceEnabled;
 
     const config = this.initializerContext.config.get<ClientConfigType>();
+
+    console.log('config', config);
+
 
     const accountInfo = (await fetchAccountInfoSafe(core.http))?.data;
     const multitenancyEnabled = (await getDashboardsInfoSafe(core.http))?.multitenancy_enabled;
@@ -211,5 +214,5 @@ export class SecurityPlugin
     return {};
   }
 
-  public stop() {}
+  public stop() { }
 }

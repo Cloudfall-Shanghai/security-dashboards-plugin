@@ -288,6 +288,13 @@ export const configSchema = schema.object({
     autologout: schema.boolean({ defaultValue: true }),
     backend_configurable: schema.boolean({ defaultValue: true }),
   }),
+  mfa: schema.object({
+    enabled: schema.boolean({ defaultValue: false }),
+    email: schema.object({
+      name: schema.string({ defaultValue: 'email' }),
+    }),
+    
+  }),
 });
 
 export type SecurityPluginConfigType = TypeOf<typeof configSchema>;
@@ -297,6 +304,7 @@ export const config: PluginConfigDescriptor<SecurityPluginConfigType> = {
     enabled: true,
     auth: true,
     ui: true,
+    mfa: true,
     multitenancy: true,
     readonly_mode: true,
     clusterPermissions: true,
@@ -305,6 +313,7 @@ export const config: PluginConfigDescriptor<SecurityPluginConfigType> = {
     disabledRestCategories: true,
   },
   schema: configSchema,
+  
   deprecations: ({ rename, unused }) => [
     rename('basicauth.login.title', 'ui.basicauth.login.title'),
     rename('basicauth.login.subtitle', 'ui.basicauth.login.subtitle'),

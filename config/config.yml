@@ -1,0 +1,3 @@
+opensearchDashboardsSecurity: 'admin@example.com'
+opensearch-security-dashboards.mfa.enabled: true
+opensearchDashboardsSecurity.mfa.email.name: 'admin@example.com'

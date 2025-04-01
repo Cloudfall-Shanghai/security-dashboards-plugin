@@ -25,6 +25,13 @@ import {
   EuiFormRow,
   EuiHorizontalRule,
   EuiFieldPassword,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiModal,
+  EuiModalBody,
+  EuiModalFooter,
+  EuiModalHeader,
+  EuiModalHeaderTitle,
 } from '@elastic/eui';
 import { CoreStart } from '../../../../../src/core/public';
 import { ClientConfigType } from '../../types';
@@ -36,6 +43,7 @@ import {
   SAML_AUTH_LOGIN_WITH_FRAGMENT,
 } from '../../../common';
 import { getSavedTenant } from '../../utils/storage-utils';
+import { validateEmailCode } from '../../utils/emailCode-utils';
 
 interface LoginPageDeps {
   http: CoreStart['http'];
@@ -94,12 +102,18 @@ export function extractNextUrlFromWindowLocation(): string {
 }
 
 export function LoginPage(props: LoginPageDeps) {
+  console.log('props', props);
+  
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loginFailed, setloginFailed] = useState(false);
   const [loginError, setloginError] = useState('');
   const [usernameValidationFailed, setUsernameValidationFailed] = useState(false);
   const [passwordValidationFailed, setPasswordValidationFailed] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCodeValidationFailed, setVerificationCodeValidationFailed] = useState(false);
+  const [verificationCodeError, setVerificationCodeError] = useState('');
 
   let errorLabel: any = null;
   if (loginFailed) {
@@ -132,14 +146,19 @@ export function LoginPage(props: LoginPageDeps) {
 
     try {
       await validateCurrentPassword(props.http, username, password);
-      redirect(props.http.basePath.serverBasePath);
-    } catch (error) {
-      console.log(error);
+      if (username !== 'admin') {
+        setShowVerificationModal(true);
+      } else {
+        redirect(props.http.basePath.serverBasePath);
+      }
+    } catch (error: any) {
       setloginFailed(true);
-      setloginError('Invalid username or password. Please try again.');
+      setloginError(error.body.message);
       return;
     }
   };
+
+
 
   const renderLoginButton = (
     authType: string,
@@ -272,30 +291,88 @@ export function LoginPage(props: LoginPageDeps) {
     return formBody;
   };
 
+  const handleVerificationSubmit = async () => {
+    if (verificationCode === '') {
+      setVerificationCodeValidationFailed(true);
+      return;
+    }
+
+    try {
+      await validateEmailCode(props.http, username, verificationCode);
+
+      setShowVerificationModal(false);
+      redirect(props.http.basePath.serverBasePath);
+    } catch (error: any) {
+      console.log(typeof error);
+      console.log({ error });
+      setVerificationCodeValidationFailed(true);
+      setVerificationCodeError(error.body.message);
+    }
+
+  };
+
   // TODO: Get brand image from server config
   return (
-    <EuiListGroup className="login-wrapper">
-      {props.config.ui.basicauth.login.showbrandimage && (
-        <EuiImage
-          size="fullWidth"
-          alt=""
-          url={props.config.ui.basicauth.login.brandimage || props.chrome.logos.OpenSearch.url}
-        />
+    <>
+      {showVerificationModal && (
+        <EuiModal onClose={() => setShowVerificationModal(false)}>
+          <EuiModalHeader>
+            <EuiModalHeaderTitle>Enter Verification Code</EuiModalHeaderTitle>
+          </EuiModalHeader>
+
+          <EuiModalBody>
+            <EuiText size="s">
+              A verification code has been sent to your email {username}. Please enter the code to complete login.
+            </EuiText>
+            <EuiSpacer size="s" />
+            <EuiFormRow isInvalid={verificationCodeValidationFailed} error={verificationCodeError}>
+              <EuiFieldText
+                placeholder="Enter verification code"
+                onChange={(e) => setVerificationCode(e.target.value)}
+                isInvalid={verificationCodeValidationFailed}
+              />
+            </EuiFormRow>
+          </EuiModalBody>
+
+          <EuiModalFooter>
+            <EuiFlexGroup justifyContent="flexEnd">
+              <EuiFlexItem grow={false}>
+                <EuiButton onClick={() => setShowVerificationModal(false)}>Cancel</EuiButton>
+              </EuiFlexItem>
+              <EuiFlexItem grow={false}>
+                <EuiButton fill onClick={handleVerificationSubmit}>
+                  Verify
+                </EuiButton>
+              </EuiFlexItem>
+            </EuiFlexGroup>
+          </EuiModalFooter>
+        </EuiModal>
       )}
-      <EuiSpacer size="s" />
-      <EuiText size="m" textAlign="center">
-        {props.config.ui.basicauth.login.title || 'Log in to OpenSearch Dashboards'}
-      </EuiText>
-      <EuiSpacer size="s" />
-      <EuiText size="s" textAlign="center">
-        {props.config.ui.basicauth.login.subtitle ||
-          'If you have forgotten your username or password, contact your system administrator.'}
-      </EuiText>
-      <EuiSpacer size="s" />
-      <EuiForm component="form">
-        {formOptions(props.config.auth.type)}
-        {errorLabel}
-      </EuiForm>
-    </EuiListGroup>
+
+      <EuiListGroup className="login-wrapper">
+        {props.config.ui.basicauth.login.showbrandimage && (
+          <EuiImage
+            size="fullWidth"
+            alt=""
+            url={props.config.ui.basicauth.login.brandimage || props.chrome.logos.OpenSearch.url}
+          />
+        )}
+        <EuiSpacer size="s" />
+        <EuiText size="m" textAlign="center">
+          {props.config.ui.basicauth.login.title || 'Log in to OpenSearch Dashboards'}
+        </EuiText>
+        <EuiSpacer size="s" />
+        <EuiText size="s" textAlign="center">
+          {props.config.ui.basicauth.login.subtitle ||
+            'If you have forgotten your username or password, contact your system administrator.'}
+        </EuiText>
+        <EuiSpacer size="s" />
+        <EuiForm component="form">
+          {formOptions(props.config.auth.type)}
+          {errorLabel}
+        </EuiForm>
+      </EuiListGroup>
+    </>
+
   );
 }

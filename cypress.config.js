@@ -34,6 +34,13 @@ module.exports = defineConfig({
     externalDataSourceAdminUserName: 'admin',
     externalDataSourceAdminPassword: 'myStrongPassword123!',
     externalDataSourceLabel: '9202',
-    externalDataSourceEndpoint: 'https://localhost:9202'
+    externalDataSourceEndpoint: 'https://localhost:9202',
+    REACT_APP_ALGORITHM_ICONS_PATH: 'smtp.example.com',
+  },
+  mfa: {
+    enabled: true,
+    email: {
+      name: 'email111',
+    },
   },
 });
